@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Иш режа — топшириқлар</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14532d">
+<style>
+  :root{
+    --bg:#0b1210; --panel:#12201b; --panel2:#182a22; --line:#274235;
+    --ink:#eaf3ee; --ink-dim:#9db3a8; --gold:#4ade80; --gold-soft:#86efac;
+    --danger:#f87171; --warn:#fbbf24; --blue:#60a5fa;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);min-height:100vh;}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px;}
+  h1{font-size:1.3rem;margin:4px 0 2px;}
+  .sub{color:var(--ink-dim);font-size:.85rem;margin-bottom:20px;}
+  .months-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+  .month-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 14px;
+    text-align:center;cursor:pointer;transition:.15s;
+  }
+  .month-card.active{border-color:var(--gold);}
+  .month-card.disabled{opacity:.45;cursor:not-allowed;}
+  .month-card:not(.disabled):hover{border-color:var(--gold);transform:translateY(-2px);}
+  .month-card .micon{font-size:1.6rem;margin-bottom:6px;}
+  .month-card .mname{font-weight:700;font-size:.95rem;}
+  .month-card .mcount{color:var(--ink-dim);font-size:.75rem;margin-top:4px;}
+
+  .backbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .btn-back{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:.85rem;cursor:pointer;}
+  .screen-title{font-size:1.1rem;font-weight:700;}
+
+  .task-list{display:flex;flex-direction:column;gap:10px;}
+  .task-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+    cursor:pointer;display:flex;gap:12px;align-items:flex-start;
+  }
+  .task-card:hover{border-color:var(--gold);}
+  .task-card.na{opacity:.5;}
+  .task-num{
+    flex:none;width:30px;height:30px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--gold-soft);
+  }
+  .task-body{flex:1;min-width:0;}
+  .task-title{font-size:.92rem;font-weight:600;line-height:1.4;}
+  .task-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .badge{font-size:.68rem;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--ink-dim);}
+  .badge.word{border-color:#60a5fa;color:#93c5fd;}
+  .badge.excel{border-color:#34d399;color:#6ee7b7;}
+  .badge.pptx{border-color:#fbbf24;color:#fde68a;}
+  .badge.na{border-color:var(--danger);color:var(--danger);}
+
+  .detail-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;}
+  .detail-title{font-size:1.05rem;font-weight:700;margin-bottom:10px;line-height:1.4;}
+  .detail-desc{color:var(--ink-dim);font-size:.88rem;line-height:1.6;margin-bottom:16px;white-space:pre-line;}
+  .detail-row{display:flex;gap:10px;font-size:.8rem;color:var(--ink-dim);margin-bottom:6px;}
+  .detail-row b{color:var(--ink);}
+  .dl-btn{
+    display:block;width:100%;text-align:center;padding:14px;border-radius:14px;border:none;
+    background:var(--gold);color:#0b1210;font-weight:700;font-size:.95rem;margin-top:16px;text-decoration:none;cursor:pointer;
+  }
+  .na-note{background:#2a1515;border:1px solid var(--danger);color:#fca5a5;border-radius:12px;padding:12px 14px;font-size:.82rem;margin-top:14px;}
+
+  /* pptx picker */
+  .tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+  .tpl{border:2px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;font-size:.75rem;cursor:pointer;color:var(--ink-dim);}
+  .tpl.sel{border-color:var(--gold);color:var(--gold-soft);background:var(--panel2);}
+  .tpl .swatch{width:100%;height:36px;border-radius:7px;margin-bottom:8px;}
+  .swatch.green{background:linear-gradient(135deg,#14532d,#4ade80);}
+  .swatch.blue{background:linear-gradient(135deg,#1e3a8a,#60a5fa);}
+  .swatch.mono{background:linear-gradient(135deg,#1f2937,#9ca3af);}
+  .mode-tabs{display:flex;gap:8px;margin:14px 0;}
+  .mode-tab{flex:1;padding:10px;text-align:center;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink-dim);font-size:.8rem;cursor:pointer;}
+  .mode-tab.sel{border-color:var(--gold);color:var(--gold-soft);}
+  .form-grid{display:none;}
+  .form-grid.show{display:block;}
+  label{display:block;font-size:.78rem;color:var(--ink-dim);margin:10px 0 6px;}
+  input[type=text], input[type=number]{
+    width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
+    background:#0b1a14;color:var(--ink);font-size:.95rem;
+  }
+  .row2{display:flex;gap:10px;}
+  .row2>div{flex:1;}
+  .upload-box{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--ink-dim);font-size:.82rem;cursor:pointer;margin-top:10px;}
+  .upload-box.has-files{border-color:var(--gold);color:var(--gold-soft);}
+  input[type=file]{display:none;}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .thumbs img{width:58px;height:58px;object-fit:cover;border-radius:9px;border:1px solid var(--line);}
+  .link-box{display:flex;gap:8px;margin-top:10px;}
+  .link-box input{flex:1;}
+  .copy-btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:0 14px;cursor:pointer;font-size:.82rem;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="slidegen.js"></script>
+<script src="data.js"></script>
+<script>
+const appEl = document.getElementById('app');
+let screen = 'months';
+let activeMonthId = null;
+let activeTaskId = null;
+
+function render(){
+  if(screen==='months') return renderMonths();
+  if(screen==='tasks') return renderTasks();
+  if(screen==='detail') return renderDetail();
+}
+
+function renderMonths(){
+  let html = `<h1>📋 Иш режа — топшириқлар</h1>
+  <div class="sub">Ойни танланг, сўнг шу ойдаги топшириқлар рўйхатидан керакли файл шаблонини юклаб олинг.</div>
+  <div class="months-grid">`;
+  MONTHS.forEach(m=>{
+    const cls = m.id===activeMonthId ? 'active' : (m.tasks ? '' : 'disabled');
+    html += `<div class="month-card ${cls}" data-id="${m.id}">
+      <div class="micon">${m.icon}</div>
+      <div class="mname">${m.name}</div>
+      <div class="mcount">${m.tasks ? m.tasks.length+' та топшириқ' : 'Тez кунда'}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  appEl.innerHTML = html;
+  appEl.querySelectorAll('.month-card').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const m = MONTHS.find(x=>x.id===c.dataset.id);
+      if(!m.tasks) return;
+      activeMonthId = m.id;
+      screen = 'tasks';
+      render();
+    });
+  });
+}
+
+function badgeFor(t){
+  if(!t.applicable) return `<span class="badge na">Татбиқ этилмайди</span>`;
+  const map = {word:'word', excel:'excel', pptx:'pptx', buyruq:'word', bayonnoma:'word', taklif:'word'};
+  const labelMap = {word:'Word', excel:'Excel', pptx:'PowerPoint', buyruq:'Буйруқ', bayonnoma:'Баённома', taklif:'Таклифнома'};
+  return `<span class="badge ${map[t.kind]||'word'}">${labelMap[t.kind]||'Файл'}</span>`;
+}
+
+function renderTasks(){
+  const m = MONTHS.find(x=>x.id===activeMonthId);
+  let html = `<div class="backbar">
+    <button class="btn-back" id="back1">← Ойлар</button>
+    <div class="screen-title">${m.name} — топшириқлар</div>
+  </div>
+  <div class="task-list">`;
+  m.tasks.forEach(t=>{
+    html += `<div class="task-card ${t.applicable?'':'na'}" data-id="${t.id}">
+      <div class="task-num">${t.id}</div>
+      <div class="task-body">
+        <div class="task-title">${t.title}</div>
+        <div class="task-meta">${badgeFor(t)}<span class="badge">Муддат: ${m.deadline}</span></div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  appEl.innerHTML = html;
+  document.getElementById('back1').addEventListener('click', ()=>{ screen='months'; render(); });
+  appEl.querySelectorAll('.task-card').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeTaskId = parseInt(c.dataset.id,10); screen='detail'; render(); });
+  });
+}
+
+function renderDetail(){
+  const m = MONTHS.find(x=>x.id===activeMonthId);
+  const t = m.tasks.find(x=>x.id===activeTaskId);
+  let html = `<div class="backbar">
+    <button class="btn-back" id="back2">← Рўйхат</button>
+    <div class="screen-title">${t.id}-банд</div>
+  </div>
+  <div class="detail-card">
+    <div class="detail-title">${t.title}</div>
+    <div class="detail-desc">${t.desc}</div>
+    <div class="detail-row"><span>📅 Муддат:</span><b>${m.deadline}</b></div>
+    <div class="detail-row"><span>📄 Натижа:</span><b>${t.result}</b></div>
+  `;
+
+  if(!t.applicable){
+    html += `<div class="na-note">⚠️ ${t.naReason}</div>`;
+  } else if(t.kind==='pptx'){
+    html += renderPptxPicker();
+  } else if(t.file){
+    html += `<a class="dl-btn" href="${t.file}" download>⬇️ Шаблонни юклаб олиш (${t.fileLabel||'Word'})</a>
+    <div class="detail-row" style="margin-top:10px;"><span>ℹ️</span><span style="color:var(--ink-dim);">Файл тахминий рақамлар билан тайёр — бажариш давомида ҳақиқий маълумотларни киритинг.</span></div>`;
+  }
+
+  html += `</div>`;
+  appEl.innerHTML = html;
+  document.getElementById('back2').addEventListener('click', ()=>{ screen='tasks'; render(); });
+  if(t.applicable && t.kind==='pptx') wirePptxPicker();
+}
+
+/* ---------------- PPTX (3-band) maxsus blok ---------------- */
+function renderPptxPicker(){
+  return `
+    <label style="margin-top:0;">Слайд услубини танланг</label>
+    <div class="tpl-grid" id="tplGrid">
+      <div class="tpl sel" data-tpl="green"><div class="swatch green"></div>Яшил</div>
+      <div class="tpl" data-tpl="blue"><div class="swatch blue"></div>Кўк</div>
+      <div class="tpl" data-tpl="mono"><div class="swatch mono"></div>Оддий</div>
+    </div>
+
+    <div class="mode-tabs">
+      <div class="mode-tab sel" data-mode="self">Ўзим тайёрлайман</div>
+      <div class="mode-tab" data-mode="schools">Барча мактабларга тарқатиш</div>
+    </div>
+
+    <div class="form-grid show" id="selfForm">
+      <label>Мактаб номи</label>
+      <input type="text" id="pSchool" placeholder="Масалан: 12-мактаб">
+      <div class="row2">
+        <div><label>Компьютерлар сони</label><input type="number" id="pComp" value="8"></div>
+        <div><label>Электрон доска сони</label><input type="number" id="pDoska" value="1"></div>
+      </div>
+      <label>Расмлар (то 4 та)</label>
+      <div class="upload-box" id="pUploadBox">📷 Расмларни танлаш учун босинг</div>
+      <input type="file" id="pFileInput" accept="image/*" multiple>
+      <div class="thumbs" id="pThumbs"></div>
+      <button class="dl-btn" id="pGenBtn" style="border:none;">Слайдни яратиш ва юклаб олиш</button>
+    </div>
+
+    <div class="form-grid" id="schoolsForm">
+      <div class="detail-row" style="margin-top:10px;"><span style="color:var(--ink-dim);">Ушбу слайд ҳар бир мактаб учун алоҳида тайёрланиши керак. Қуйидаги ҳаволани барча мактабларга (Telegram/группа орқали) юборинг — улар ўзлари расмларини юклаб, тайёр слайдни юклаб олишади.</span></div>
+      <div class="link-box">
+        <input type="text" id="schoolLink" readonly>
+        <button class="copy-btn" id="copyLinkBtn">Нусха олиш</button>
+      </div>
+    </div>
+  `;
+}
+
+function wirePptxPicker(){
+  let selectedTpl = 'green';
+  let photoDataUrls = [];
+
+  document.querySelectorAll('#tplGrid .tpl').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('#tplGrid .tpl').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+      selectedTpl = el.dataset.tpl;
+      updateSchoolLink();
+    });
+  });
+
+  document.querySelectorAll('.mode-tab').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelectorAll('.mode-tab').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+      const mode = el.dataset.mode;
+      document.getElementById('selfForm').classList.toggle('show', mode==='self');
+      document.getElementById('schoolsForm').classList.toggle('show', mode==='schools');
+      if(mode==='schools') updateSchoolLink();
+    });
+  });
+
+  function updateSchoolLink(){
+    const base = location.href.replace(/index\.html.*$/,'').replace(/\/?$/,'/');
+    document.getElementById('schoolLink').value = base + 'school-form.html?template=' + selectedTpl;
+  }
+
+  document.getElementById('copyLinkBtn').addEventListener('click', ()=>{
+    const inp = document.getElementById('schoolLink');
+    inp.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    if(navigator.clipboard) navigator.clipboard.writeText(inp.value).catch(()=>{});
+  });
+
+  document.getElementById('pUploadBox').addEventListener('click', ()=> document.getElementById('pFileInput').click());
+  document.getElementById('pFileInput').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files).slice(0,4);
+    photoDataUrls = [];
+    document.getElementById('pThumbs').innerHTML = '';
+    for(const f of files){
+      const dataUrl = await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+      photoDataUrls.push(dataUrl);
+      const img = document.createElement('img'); img.src = dataUrl;
+      document.getElementById('pThumbs').appendChild(img);
+    }
+    const box = document.getElementById('pUploadBox');
+    box.classList.toggle('has-files', photoDataUrls.length>0);
+    box.textContent = photoDataUrls.length ? `✅ ${photoDataUrls.length} та расм танланди` : '📷 Расмларни танлаш учун босинг';
+  });
+
+  document.getElementById('pGenBtn').addEventListener('click', async ()=>{
+    const schoolName = document.getElementById('pSchool').value.trim();
+    if(!schoolName){ alert('Илтимос, мактаб номини киритинг.'); return; }
+    const btn = document.getElementById('pGenBtn');
+    btn.textContent = 'Яратилмоқда…';
+    try{
+      await generateAndDownload({
+        template: selectedTpl,
+        schoolName,
+        computerCount: document.getElementById('pComp').value,
+        doskaCount: document.getElementById('pDoska').value,
+        photos: photoDataUrls,
+        note: 'Ёзёвон тумани Мактабгача ва мактаб таълими бўлими'
+      });
+    }catch(e){ alert('Хатолик: '+e.message); }
+    btn.textContent = 'Слайдни яратиш ва юклаб олиш';
+  });
+}
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>

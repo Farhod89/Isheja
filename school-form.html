@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Фотоҳисобот слайди — мактаб формаси</title>
+<style>
+  :root{
+    --bg:#0b1210; --panel:#12201b; --panel2:#182a22; --line:#274235;
+    --ink:#eaf3ee; --ink-dim:#9db3a8; --gold:#4ade80; --gold-soft:#86efac;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);min-height:100vh;padding:16px;display:flex;justify-content:center;}
+  .wrap{width:100%;max-width:480px;}
+  h1{font-size:1.2rem;margin:4px 0 2px;}
+  .sub{color:var(--ink-dim);font-size:.85rem;margin-bottom:18px;line-height:1.5;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;}
+  label{display:block;font-size:.8rem;color:var(--ink-dim);margin-bottom:6px;}
+  input[type=text], input[type=number]{
+    width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+    background:#0b1a14;color:var(--ink);font-size:1rem;margin-bottom:14px;
+  }
+  .row2{display:flex;gap:10px;}
+  .row2 > div{flex:1;}
+  .tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+  .tpl{border:2px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;font-size:.72rem;cursor:pointer;color:var(--ink-dim);}
+  .tpl.sel{border-color:var(--gold);color:var(--gold-soft);background:var(--panel2);}
+  .tpl .swatch{width:100%;height:30px;border-radius:6px;margin-bottom:6px;}
+  .swatch.green{background:linear-gradient(135deg,#14532d,#4ade80);}
+  .swatch.blue{background:linear-gradient(135deg,#1e3a8a,#60a5fa);}
+  .swatch.mono{background:linear-gradient(135deg,#1f2937,#9ca3af);}
+  .upload-box{
+    border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;
+    color:var(--ink-dim);font-size:.85rem;margin-bottom:10px;cursor:pointer;
+  }
+  .upload-box.has-files{border-color:var(--gold);color:var(--gold-soft);}
+  input[type=file]{display:none;}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .thumbs img{width:68px;height:68px;object-fit:cover;border-radius:10px;border:1px solid var(--line);}
+  button{width:100%;padding:14px;border-radius:14px;border:none;font-size:1rem;font-weight:600;cursor:pointer;}
+  .btn-primary{background:var(--gold);color:#0b1210;}
+  .btn-primary:disabled{background:#2b3a33;color:#6b7d74;}
+  .foot{text-align:center;color:var(--ink-dim);font-size:.72rem;margin-top:16px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📸 Фотоҳисобот слайди</h1>
+  <div class="sub">
+    Мактабингизга етказиб берилган компьютер техникалари ва электрон доскалар
+    бўйича фотоҳисобот слайдини шу ерда ўзингиз тайёрлаб, юклаб олинг.
+    Тайёр бўлгач, PowerPoint файлини бўлимга юборинг.
+  </div>
+
+  <div class="card">
+    <label>Мактаб номи</label>
+    <input type="text" id="schoolName" placeholder="Масалан: 12-мактаб">
+
+    <div class="row2">
+      <div>
+        <label>Компьютерлар сони</label>
+        <input type="number" id="compCount" value="8" min="0">
+      </div>
+      <div>
+        <label>Электрон доска сони</label>
+        <input type="number" id="doskaCount" value="1" min="0">
+      </div>
+    </div>
+
+    <label>Слайд услуби</label>
+    <div class="tpl-grid" id="tplGrid">
+      <div class="tpl sel" data-tpl="green"><div class="swatch green"></div>Яшил</div>
+      <div class="tpl" data-tpl="blue"><div class="swatch blue"></div>Кўк</div>
+      <div class="tpl" data-tpl="mono"><div class="swatch mono"></div>Оддий</div>
+    </div>
+
+    <label>Расмлар (компьютер синфи, электрон доска — то 4 та расм)</label>
+    <div class="upload-box" id="uploadBox">📷 Расмларни танлаш учун босинг</div>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <div class="thumbs" id="thumbs"></div>
+
+    <button class="btn-primary" id="genBtn">Слайдни яратиш ва юклаб олиш</button>
+  </div>
+
+  <div class="foot">
+    Файл сизнинг қурилмангизда яратилади ва ҳеч қаерга автоматик юборилмайди —
+    юклаб олгандан сўнг уни ўзингиз бўлимга (Telegram/почта орқали) юборинг.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="slidegen.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let selectedTpl = 'green';
+let photoDataUrls = [];
+
+// URL orqali shablon oldindan belgilangan bo'lsa (masalan ?template=blue)
+const qs = new URLSearchParams(location.search);
+if (qs.get('template')) {
+  selectedTpl = qs.get('template');
+  document.querySelectorAll('.tpl').forEach(el => el.classList.toggle('sel', el.dataset.tpl === selectedTpl));
+}
+
+document.querySelectorAll('.tpl').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.tpl').forEach(x => x.classList.remove('sel'));
+    el.classList.add('sel');
+    selectedTpl = el.dataset.tpl;
+  });
+});
+
+$('uploadBox').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files).slice(0, 4);
+  photoDataUrls = [];
+  $('thumbs').innerHTML = '';
+  for (const f of files) {
+    const dataUrl = await new Promise(res => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.readAsDataURL(f);
+    });
+    photoDataUrls.push(dataUrl);
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    $('thumbs').appendChild(img);
+  }
+  $('uploadBox').classList.toggle('has-files', photoDataUrls.length > 0);
+  $('uploadBox').textContent = photoDataUrls.length
+    ? `✅ ${photoDataUrls.length} та расм танланди (қайта танлаш учун босинг)`
+    : '📷 Расмларни танлаш учун босинг';
+});
+
+$('genBtn').addEventListener('click', async () => {
+  const schoolName = $('schoolName').value.trim();
+  if (!schoolName) { alert('Илтимос, мактаб номини киритинг.'); return; }
+  $('genBtn').disabled = true;
+  $('genBtn').textContent = 'Яратилмоқда…';
+  try {
+    await generateAndDownload({
+      template: selectedTpl,
+      schoolName,
+      computerCount: $('compCount').value,
+      doskaCount: $('doskaCount').value,
+      photos: photoDataUrls,
+      note: 'Ёзёвон тумани Мактабгача ва мактаб таълими бўлими — АКТни жорий этиш ва рақамлаштириш йўналиши'
+    });
+  } catch (e) {
+    alert('Хатолик юз берди: ' + e.message);
+  }
+  $('genBtn').disabled = false;
+  $('genBtn').textContent = 'Слайдни яратиш ва юклаб олиш';
+});
+</script>
+</body>
+</html>
